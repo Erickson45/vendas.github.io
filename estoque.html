@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel LevelUp3D - Estoque</title>
+    
+    <meta name="theme-color" content="#1A1A2E"/>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Audiowide&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --bg-dark: #12121E;
+            --bg-main: #1A1A2E;
+            --bg-sidebar: #161625;
+            --text-light: #F0F0F0;
+            --text-muted: #A0A0A0;
+            --accent-cyan: #44CFCB;
+            --accent-purple: #8A2BE2;
+            --accent-gold: #FFD700;
+            --status-pending: #555B69;
+            --status-completed: var(--accent-cyan);
+            --danger: #ff4d4d;
+            --sidebar-width: 280px;
+        }
+
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        /* --- Layout Principal --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid rgba(138, 43, 226, 0.3);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 100;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem 3rem;
+        }
+        
+        .logo h1 {
+            font-family: 'Audiowide', cursive;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(68, 207, 203, 0.5);
+            margin: 0;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .logo h1 i { margin-right: 10px; }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: block;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s, color 0.3s;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background-color: var(--accent-purple);
+            color: white;
+        }
+
+        .nav-links i {
+            margin-right: 10px;
+        }
+
+        /* --- Conteúdo Principal --- */
+        section {
+            background-color: var(--bg-main);
+            padding: 2rem; border-radius: 15px; margin-bottom: 2rem;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 { font-family: 'Audiowide', cursive; color: var(--accent-cyan); }
+        
+        #product-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 0.5rem; font-weight: 500; }
+        input, select, button {
+            padding: 0.8rem; border-radius: 8px; border: 1px solid var(--accent-purple);
+            background-color: var(--bg-dark); color: var(--text-light); font-size: 1rem;
+        }
+        .submit-btn {
+            background: linear-gradient(45deg, var(--accent-purple), var(--accent-cyan)); font-weight: 600;
+            cursor: pointer; transition: transform 0.3s, filter 0.3s;
+            border: none;
+        }
+        .submit-btn:hover { transform: translateY(-3px); filter: brightness(1.2); }
+
+        .products-table-wrapper { overflow-x: auto; margin-top: 1.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #2A2A4E; white-space: nowrap; }
+        th { color: var(--accent-cyan); }
+        td { color: var(--text-muted); }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .action-buttons button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: color 0.3s, transform 0.2s;
+        }
+        .action-buttons button:hover {
+            transform: scale(1.2);
+        }
+        .edit-btn { color: var(--accent-gold); }
+        .delete-btn { color: var(--danger); }
+        
+        /* Estilo do Rodapé */
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            padding: 1rem 0;
+            border-top: 1px solid rgba(138, 43, 226, 0.3);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .footer p {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Estilos Mobile --- */
+        .mobile-header { display: none; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 99; }
+        .overlay.visible { display: block; }
+        
+        @media (max-width: 950px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.visible { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 1rem; }
+            
+            .mobile-header {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 1rem; background-color: var(--bg-sidebar);
+            }
+            #menu-toggle { font-size: 1.5rem; background: none; border: none; color: var(--accent-cyan); }
+            .mobile-logo h1 { font-size: 1.5rem; }
+            
+            #product-form { grid-template-columns: 1fr; }
+
+            .products-table-wrapper thead { display: none; }
+            .products-table-wrapper tr {
+                display: block; border: 1px solid var(--accent-purple);
+                border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
+            }
+            .products-table-wrapper td {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 0.5rem 0; border-bottom: 1px dashed #2A2A4E;
+                white-space: normal; text-align: right;
+            }
+            .products-table-wrapper td:last-child { border-bottom: none; }
+            .products-table-wrapper td::before {
+                content: attr(data-label); font-weight: bold;
+                color: var(--accent-cyan); text-align: left; margin-right: 1rem;
+            }
+            .footer { margin-top: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <aside class="sidebar">
+        <div class="logo"><h1><i class="fas fa-rocket"></i> LevelUp3D</h1></div>
+        <nav class="nav-links">
+            <a href="index.html"><i class="fas fa-chart-line"></i> Vendas</a>
+            <a href="estoque.html" class="active"><i class="fas fa-box-open"></i> Estoque</a>
+        </nav>
+    </aside>
+
+    <header class="mobile-header">
+        <button id="menu-toggle"><i class="fas fa-bars"></i></button>
+        <div class="mobile-logo"><h1><i class="fas fa-rocket"></i> LVLUP3D</h1></div>
+    </header>
+
+    <main class="main-content">
+        <section>
+            <h2><i class="fas fa-cubes"></i> Gerenciar Estoque</h2>
+            <form id="product-form">
+                <div class="form-group"><label for="product-name">Nome do Produto</label><input type="text" id="product-name" required></div>
+                <div class="form-group"><label for="product-quantity">Quantidade</label><input type="number" id="product-quantity" value="0" min="0" required></div>
+                <div class="form-group-full"><button type="submit" class="submit-btn">Adicionar Produto</button></div>
+            </form>
+        </section>
+
+        <section>
+            <h2><i class="fas fa-list"></i> Produtos Registrados</h2>
+            <div class="products-table-wrapper">
+                <table id="products-table">
+                    <thead>
+                        <tr><th>Nome</th><th>Quantidade</th><th style="text-align:center;">Ações</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="footer">
+        <p>© 2025 LevelUp3D. Todos os direitos reservados.</p>
+        <p>Desenvolvido por Erick-san</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const productForm = document.getElementById('product-form');
+            const productsTableBody = document.querySelector('#products-table tbody');
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.overlay');
+
+            let products = JSON.parse(localStorage.getItem('products')) || [];
+
+            // --- Lógica do Menu Mobile ---
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.add('visible');
+                overlay.classList.add('visible');
+            });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('visible');
+                overlay.classList.remove('visible');
+            });
+
+            const saveProducts = () => localStorage.setItem('products', JSON.stringify(products));
+
+            const renderProducts = () => {
+                productsTableBody.innerHTML = '';
+                if (products.length === 0) {
+                    productsTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhum produto cadastrado.</td></tr>';
+                } else {
+                    products.forEach((product, index) => {
+                        const row = document.createElement('tr');
+                        row.dataset.index = index;
+                        row.innerHTML = `
+                            <td data-label="Nome">${product.name}</td>
+                            <td data-label="Quantidade">${product.quantity}</td>
+                            <td data-label="Ações" class="action-buttons">
+                                <button class="edit-btn"><i class="fas fa-edit"></i></button>
+                                <button class="delete-btn"><i class="fas fa-trash-alt"></i></button>
+                            </td>`;
+                        productsTableBody.appendChild(row);
+                    });
+                }
+            };
+
+            const addProduct = (e) => {
+                e.preventDefault();
+                const productName = document.getElementById('product-name').value;
+                const productQuantity = parseInt(document.getElementById('product-quantity').value);
+                
+                const existingProduct = products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+                
+                if (existingProduct) {
+                    Swal.fire({
+                        title: 'Produto já existe!',
+                        text: `O produto "${productName}" já está cadastrado. Deseja atualizar a quantidade?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, atualizar!',
+                        cancelButtonText: 'Não',
+                        background: '#1A1A2E',
+                        color: '#F0F0F0',
+                        confirmButtonColor: '#8A2BE2',
+                        cancelButtonColor: '#555B69'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            existingProduct.quantity += productQuantity;
+                            saveProducts();
+                            renderProducts();
+                            productForm.reset();
+                            Swal.fire({
+                                title: 'Atualizado!',
+                                text: `A quantidade de "${productName}" foi atualizada.`,
+                                icon: 'success',
+                                background: '#1A1A2E',
+                                color: '#F0F0F0'
+                            });
+                        }
+                    });
+                } else {
+                    products.push({ name: productName, quantity: productQuantity });
+                    saveProducts();
+                    renderProducts();
+                    productForm.reset();
+                    Swal.fire({
+                        title: 'Adicionado!',
+                        text: `"${productName}" foi adicionado ao estoque.`,
+                        icon: 'success',
+                        background: '#1A1A2E',
+                        color: '#F0F0F0'
+                    });
+                }
+            };
+
+            const handleTableClick = (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+                
+                const rowIndex = parseInt(target.closest('tr').dataset.index);
+                const product = products[rowIndex];
+
+                if (target.classList.contains('edit-btn')) {
+                    Swal.fire({
+                        title: `Editar "${product.name}"`,
+                        html: `
+                            <label for="swal-name">Novo Nome:</label>
+                            <input id="swal-name" class="swal2-input" value="${product.name}">
+                            <label for="swal-quantity">Nova Quantidade:</label>
+                            <input type="number" id="swal-quantity" class="swal2-input" value="${product.quantity}" min="0">
+                        `,
+                        background: '#1A1A2E',
+                        color: '#F0F0F0',
+                        showCancelButton: true,
+                        confirmButtonText: 'Salvar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#8A2BE2',
+                        cancelButtonColor: '#555B69',
+                        preConfirm: () => {
+                            const newName = document.getElementById('swal-name').value;
+                            const newQuantity = parseInt(document.getElementById('swal-quantity').value);
+                            if (!newName || isNaN(newQuantity) || newQuantity < 0) {
+                                Swal.showValidationMessage('Nome e quantidade são obrigatórios e a quantidade deve ser um número não negativo.');
+                                return false;
+                            }
+                            return { name: newName, quantity: newQuantity };
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            products[rowIndex].name = result.value.name;
+                            products[rowIndex].quantity = result.value.quantity;
+                            saveProducts();
+                            renderProducts();
+                            Swal.fire('Atualizado!', 'O produto foi atualizado.', 'success');
+                        }
+                    });
+                }
+                
+                if (target.classList.contains('delete-btn')) {
+                    Swal.fire({
+                        title: 'Você tem certeza?',
+                        text: `Deletar o produto "${product.name}"? Esta ação não pode ser desfeita!`,
+                        icon: 'warning',
+                        iconColor: '#FFD700',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, deletar!',
+                        cancelButtonText: 'Cancelar',
+                        background: '#1A1A2E',
+                        color: '#F0F0F0',
+                        confirmButtonColor: '#8A2BE2',
+                        cancelButtonColor: '#555B69'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            products.splice(rowIndex, 1);
+                            saveProducts();
+                            renderProducts();
+                            Swal.fire({
+                                title: 'Deletado!',
+                                text: 'O produto foi removido.',
+                                icon: 'success',
+                                background: '#1A1A2E',
+                                color: '#F0F0F0',
+                                confirmButtonColor: '#8A2BE2'
+                            });
+                        }
+                    });
+                }
+            };
+
+            // Event Listeners
+            productForm.addEventListener('submit', addProduct);
+            productsTableBody.addEventListener('click', handleTableClick);
+
+            renderProducts();
+        });
+    </script>
+</body>
+</html>
