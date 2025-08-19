@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel LevelUp3D - Vendas</title>
+    
+    <meta name="theme-color" content="#1A1A2E"/>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Audiowide&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     
@@ -23,6 +28,7 @@
             --status-pending: #555B69;
             --status-completed: var(--accent-cyan);
             --danger: #ff4d4d;
+            --sidebar-width: 280px;
         }
 
         html { box-sizing: border-box; }
@@ -33,28 +39,28 @@
             margin: 0;
             background-color: var(--bg-dark);
             color: var(--text-light);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
         }
 
-        /* --- Layout Principal --- */
+        /* --- Layout Principal CORRIGIDO --- */
         .sidebar {
-            width: 280px;
+            width: var(--sidebar-width);
             background-color: var(--bg-sidebar);
             border-right: 1px solid rgba(138, 43, 226, 0.3);
             padding: 2rem;
             display: flex;
             flex-direction: column;
             gap: 2.5rem;
-            z-index: 1;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 100;
+            transition: transform 0.3s ease-in-out;
         }
 
         .main-content {
-            flex-grow: 1;
+            margin-left: var(--sidebar-width);
             padding: 2rem 3rem;
-            overflow-y: auto;
-            z-index: 1;
         }
 
         .logo h1 {
@@ -83,15 +89,11 @@
         }
         .backup-actions button:hover, .backup-actions label:hover { background-color: var(--accent-purple); color: white; }
         #import-csv-input { display: none; }
-
+        
         /* --- Conteúdo Principal --- */
-        .page-header h1 { font-size: 2.5rem; margin-bottom: 2rem; }
-
         section {
             background-color: var(--bg-main);
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
+            padding: 2rem; border-radius: 15px; margin-bottom: 2rem;
             border: 1px solid rgba(138, 43, 226, 0.2);
         }
 
@@ -111,20 +113,16 @@
         }
         .submit-btn:hover { transform: translateY(-3px); filter: brightness(1.2); }
 
-        .sales-header { display: flex; justify-content: space-between; align-items: center; }
-        .filter-buttons button {
-            background: transparent; border: 1px solid var(--accent-purple);
-            color: var(--text-muted); padding: 0.5rem 1rem; margin-left: 0.5rem;
-            border-radius: 8px; cursor: pointer; transition: background-color 0.3s, color 0.3s;
+        .sales-header, .search-and-filters { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        #search-input {
+            padding: 0.5rem 1rem; width: 250px;
         }
-        .filter-buttons button.active { background-color: var(--accent-purple); color: white; }
 
         .sales-table-wrapper { overflow-x: auto; margin-top: 1.5rem; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #2A2A4E; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #2A2A4E; white-space: nowrap; }
         th { color: var(--accent-cyan); }
         td { color: var(--text-muted); }
-        td.actions { text-align: center; }
         .status-icon, .delete-btn {
             background: none; border: none; cursor: pointer; font-size: 1.3rem;
             transition: color 0.3s, text-shadow 0.3s, transform 0.2s;
@@ -134,48 +132,61 @@
         .status-icon.completed { color: var(--status-completed); text-shadow: 0 0 8px var(--status-completed); }
         .delete-btn { color: var(--danger); }
 
-        /* Estilos para os Gráficos */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 2rem;
-            align-items: center;
-        }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: center; }
         .chart-container { max-width: 400px; margin: 2rem auto 0 auto; }
         .bar-chart-container { margin-top: 2rem; }
-        
-        /* Botões de Toggle para o Gráfico de Barras */
-        .chart-toggle {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .chart-toggle button {
+        .chart-toggle { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .chart-toggle button, .filter-buttons button {
             background: transparent; border: 1px solid var(--accent-purple);
             color: var(--text-muted); padding: 0.5rem 1rem; border-radius: 8px;
             cursor: pointer; transition: background-color 0.3s, color 0.3s;
         }
-        .chart-toggle button.active { background-color: var(--accent-purple); color: white; }
+        .chart-toggle button.active, .filter-buttons button.active { background-color: var(--accent-purple); color: white; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .new-sale-row { animation: fadeIn 0.5s ease-out; }
 
-        @media (max-width: 1200px) {
+        /* --- Estilos Mobile --- */
+        .mobile-header { display: none; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 99; }
+        .overlay.visible { display: block; }
+        
+        @media (max-width: 950px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.visible { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 1rem; }
+            
+            .mobile-header {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 1rem; background-color: var(--bg-sidebar);
+            }
+            #menu-toggle { font-size: 1.5rem; background: none; border: none; color: var(--accent-cyan); }
+            .mobile-logo h1 { font-size: 1.5rem; }
+            
+            #sale-form { grid-template-columns: 1fr; }
             .charts-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 900px) {
-            body { flex-direction: column; height: auto; overflow: auto; }
-            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid rgba(138, 43, 226, 0.3); }
-            .main-content { padding: 1.5rem; }
-            #sale-form { grid-template-columns: 1fr 1fr; }
+
+            .sales-table-wrapper thead { display: none; }
+            .sales-table-wrapper tr {
+                display: block; border: 1px solid var(--accent-purple);
+                border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
+            }
+            .sales-table-wrapper td {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 0.5rem 0; border-bottom: 1px dashed #2A2A4E;
+                white-space: normal; text-align: right;
+            }
+            .sales-table-wrapper td:last-child { border-bottom: none; }
+            .sales-table-wrapper td::before {
+                content: attr(data-label); font-weight: bold;
+                color: var(--accent-cyan); text-align: left; margin-right: 1rem;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="overlay"></div>
+
     <aside class="sidebar">
         <div class="logo"><h1><i class="fas fa-rocket"></i> LevelUp3D</h1></div>
         <div class="dashboard">
@@ -192,12 +203,17 @@
         <div class="backup">
             <h2><i class="fas fa-database"></i> Backup & Restauração</h2>
             <div class="backup-actions">
-                <button id="export-csv-btn"><i class="fas fa-file-export"></i> Exportar para CSV</button>
-                <label for="import-csv-input"><i class="fas fa-file-import"></i> Importar de CSV</label>
+                <button id="export-csv-btn"><i class="fas fa-file-export"></i> Exportar</button>
+                <label for="import-csv-input"><i class="fas fa-file-import"></i> Importar</label>
                 <input type="file" id="import-csv-input" accept=".csv">
             </div>
         </div>
     </aside>
+
+    <header class="mobile-header">
+        <button id="menu-toggle"><i class="fas fa-bars"></i></button>
+        <div class="mobile-logo"><h1><i class="fas fa-rocket"></i> LVLUP3D</h1></div>
+    </header>
 
     <main class="main-content">
         <section>
@@ -215,11 +231,10 @@
         <section>
             <div class="sales-header">
                 <h2><i class="fas fa-list-ul"></i> Vendas Registradas</h2>
-                <div class="filter-buttons">
-                    <button class="active" data-filter="all">Ver Todos</button>
-                    <button data-filter="pending">Pendentes</button>
-                    <button data-filter="completed">Concluídos</button>
-                </div>
+            </div>
+            <div class="search-and-filters">
+                <input type="search" id="search-input" placeholder="Buscar por produto ou cliente...">
+                <div class="filter-buttons"><button class="active" data-filter="all">Todos</button><button data-filter="pending">Pendentes</button><button data-filter="completed">Concluídos</button></div>
             </div>
             <div class="sales-table-wrapper">
                 <table id="sales-table">
@@ -230,18 +245,13 @@
                 </table>
             </div>
         </section>
-        
+
         <section>
             <h2><i class="fas fa-chart-bar"></i> Análise de Vendas</h2>
             <div class="charts-grid">
-                <div class="chart-container">
-                    <canvas id="salesChart"></canvas>
-                </div>
+                <div class="chart-container"><canvas id="salesChart"></canvas></div>
                 <div class="bar-chart-container">
-                    <div class="chart-toggle">
-                        <button data-metric="count" class="active">Nº de Vendas</button>
-                        <button data-metric="revenue">Faturamento</button>
-                    </div>
+                    <div class="chart-toggle"><button data-metric="count" class="active">Nº de Vendas</button><button data-metric="revenue">Faturamento</button></div>
                     <canvas id="dailySalesChart"></canvas>
                 </div>
             </div>
@@ -250,7 +260,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Elementos da UI
             const saleForm = document.getElementById('sale-form');
             const salesTableBody = document.querySelector('#sales-table tbody');
             const totalSalesEl = document.getElementById('total-sales');
@@ -258,17 +267,29 @@
             const filterButtons = document.querySelectorAll('.filter-buttons button');
             const exportBtn = document.getElementById('export-csv-btn');
             const importInput = document.getElementById('import-csv-input');
+            const searchInput = document.getElementById('search-input');
             const doughnutChartCanvas = document.getElementById('salesChart');
             const barChartCanvas = document.getElementById('dailySalesChart');
             const chartToggleButtons = document.querySelectorAll('.chart-toggle button');
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.overlay');
             
-            // Estado da aplicação
             let sales = JSON.parse(localStorage.getItem('sales')) || [];
             let currentFilter = 'all';
-            let dailyChartMetric = 'count'; // 'count' ou 'revenue'
+            let searchTerm = '';
+            let dailyChartMetric = 'count';
             let salesDoughnutChart, salesBarChart;
 
-            // --- FUNÇÕES PRINCIPAIS ---
+            // --- Lógica do Menu Mobile ---
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.add('visible');
+                overlay.classList.add('visible');
+            });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('visible');
+                overlay.classList.remove('visible');
+            });
 
             const saveData = () => localStorage.setItem('sales', JSON.stringify(sales));
             
@@ -282,11 +303,19 @@
 
             const renderSales = (newSaleId = null) => {
                 salesTableBody.innerHTML = '';
-                const filteredSales = sales.filter(sale => {
-                    if (currentFilter === 'pending') return !sale.isPaid || !sale.isDelivered;
-                    if (currentFilter === 'completed') return sale.isPaid && sale.isDelivered;
-                    return true;
-                }).sort((a, b) => b.id - a.id);
+                
+                const filteredSales = sales
+                    .filter(sale => { // Filtro de Status
+                        if (currentFilter === 'pending') return !sale.isPaid || !sale.isDelivered;
+                        if (currentFilter === 'completed') return sale.isPaid && sale.isDelivered;
+                        return true;
+                    })
+                    .filter(sale => { // Filtro de Busca
+                        const search = searchTerm.toLowerCase();
+                        const customer = sale.customer ? sale.customer.toLowerCase() : '';
+                        return sale.product.toLowerCase().includes(search) || customer.includes(search);
+                    })
+                    .sort((a, b) => b.id - a.id);
 
                 if (filteredSales.length === 0) {
                     salesTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma venda encontrada.</td></tr>';
@@ -294,109 +323,40 @@
                     filteredSales.forEach(sale => {
                         const total = sale.quantity * sale.price;
                         const row = document.createElement('tr');
-                        row.dataset.id = sale.id;
                         if (sale.id === newSaleId) row.classList.add('new-sale-row');
+                        row.dataset.id = sale.id;
                         row.innerHTML = `
-                            <td>${new Date(sale.id).toLocaleDateString('pt-BR')}</td><td>${sale.product}</td>
-                            <td>${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td><td>${sale.customer || 'N/A'}</td>
-                            <td style="text-align:center;"><button class="status-icon ${sale.isPaid ? 'completed' : 'pending'}" data-status="isPaid"><i class="fas fa-dollar-sign"></i></button></td>
-                            <td style="text-align:center;"><button class="status-icon ${sale.isDelivered ? 'completed' : 'pending'}" data-status="isDelivered"><i class="fas fa-box-open"></i></button></td>
-                            <td class="actions"><button class="delete-btn"><i class="fas fa-trash-alt"></i></button></td>`;
+                            <td data-label="Data">${new Date(sale.id).toLocaleDateString('pt-BR')}</td>
+                            <td data-label="Produto">${sale.product}</td>
+                            <td data-label="Total">${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                            <td data-label="Cliente">${sale.customer || 'N/A'}</td>
+                            <td data-label="Pago"><button class="status-icon ${sale.isPaid ? 'completed' : 'pending'}" data-status="isPaid"><i class="fas fa-dollar-sign"></i></button></td>
+                            <td data-label="Entregue"><button class="status-icon ${sale.isDelivered ? 'completed' : 'pending'}" data-status="isDelivered"><i class="fas fa-box-open"></i></button></td>
+                            <td data-label="Ações" class="actions"><button class="delete-btn"><i class="fas fa-trash-alt"></i></button></td>`;
                         salesTableBody.appendChild(row);
                     });
                 }
             };
-
-            const updateDashboard = () => {
-                const totalRevenue = sales.reduce((acc, sale) => acc + (sale.quantity * sale.price), 0);
-                totalSalesEl.textContent = sales.length;
-                totalRevenueEl.textContent = totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            };
-
-            const updateDoughnutChart = () => {
-                const salesByProduct = sales.reduce((acc, sale) => {
-                    const total = sale.price * sale.quantity;
-                    acc[sale.product] = (acc[sale.product] || 0) + total;
-                    return acc;
-                }, {});
-                if (salesDoughnutChart) salesDoughnutChart.destroy();
-                salesDoughnutChart = new Chart(doughnutChartCanvas, {
-                    type: 'doughnut', data: { labels: Object.keys(salesByProduct), datasets: [{ data: Object.values(salesByProduct), backgroundColor: ['#44CFCB', '#8A2BE2', '#FFD700', '#FF6384'], borderColor: '#1A1A2E', borderWidth: 4 }] },
-                    options: { responsive: true, plugins: { legend: { labels: { color: '#F0F0F0' } }, title: { display: true, text: 'Faturamento por Produto', color: '#F0F0F0', font: { size: 16 } } } }
-                });
-            };
-
-            const updateDailySalesChart = () => {
-                const dailyData = [0, 0, 0, 0, 0, 0, 0]; // Dom, Seg, Ter...
-                sales.forEach(sale => {
-                    const dayOfWeek = new Date(sale.id).getDay();
-                    if (dailyChartMetric === 'count') {
-                        dailyData[dayOfWeek]++;
-                    } else { // revenue
-                        dailyData[dayOfWeek] += sale.quantity * sale.price;
-                    }
-                });
-
-                if (salesBarChart) salesBarChart.destroy();
-                
-                const chartLabel = dailyChartMetric === 'count' ? 'Nº de Vendas' : 'Faturamento (R$)';
-                const yAxisConfig = dailyChartMetric === 'count' 
-                    ? { beginAtZero: true, ticks: { color: '#A0A0A0', stepSize: 1 } }
-                    : { beginAtZero: true, ticks: { color: '#A0A0A0', callback: (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) } };
-
-                salesBarChart = new Chart(barChartCanvas, {
-                    type: 'bar', data: { labels: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], datasets: [{ label: chartLabel, data: dailyData, backgroundColor: 'rgba(68, 207, 203, 0.6)', borderColor: 'rgba(68, 207, 203, 1)', borderWidth: 1 }] },
-                    options: { responsive: true, scales: { y: yAxisConfig, x: { ticks: { color: '#A0A0A0' } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Análise por Dia da Semana', color: '#F0F0F0', font: { size: 16 } } } }
-                });
-            };
             
-            const handleChartToggle = (e) => {
-                dailyChartMetric = e.target.dataset.metric;
-                chartToggleButtons.forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                updateDailySalesChart();
-            };
-
+            const updateDashboard = () => { const totalRevenue = sales.reduce((acc, sale) => acc + (sale.quantity * sale.price), 0); totalSalesEl.textContent = sales.length; totalRevenueEl.textContent = totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+            const updateDoughnutChart = () => { const salesByProduct = sales.reduce((acc, sale) => { const total = sale.price * sale.quantity; acc[sale.product] = (acc[sale.product] || 0) + total; return acc; }, {}); if (salesDoughnutChart) salesDoughnutChart.destroy(); salesDoughnutChart = new Chart(doughnutChartCanvas, { type: 'doughnut', data: { labels: Object.keys(salesByProduct), datasets: [{ data: Object.values(salesByProduct), backgroundColor: ['#44CFCB', '#8A2BE2', '#FFD700', '#FF6384'], borderColor: '#1A1A2E', borderWidth: 4 }] }, options: { responsive: true, plugins: { legend: { labels: { color: '#F0F0F0' } }, title: { display: true, text: 'Faturamento por Produto', color: '#F0F0F0', font: { size: 16 } } } } }); };
+            const updateDailySalesChart = () => { const dailyData = [0, 0, 0, 0, 0, 0, 0]; sales.forEach(sale => { const dayOfWeek = new Date(sale.id).getDay(); if (dailyChartMetric === 'count') { dailyData[dayOfWeek]++; } else { dailyData[dayOfWeek] += sale.quantity * sale.price; } }); if (salesBarChart) salesBarChart.destroy(); const chartLabel = dailyChartMetric === 'count' ? 'Nº de Vendas' : 'Faturamento (R$)'; const yAxisConfig = dailyChartMetric === 'count' ? { beginAtZero: true, ticks: { color: '#A0A0A0', stepSize: 1 } } : { beginAtZero: true, ticks: { color: '#A0A0A0', callback: (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) } }; salesBarChart = new Chart(barChartCanvas, { type: 'bar', data: { labels: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], datasets: [{ label: chartLabel, data: dailyData, backgroundColor: 'rgba(68, 207, 203, 0.6)', borderColor: 'rgba(68, 207, 203, 1)', borderWidth: 1 }] }, options: { responsive: true, scales: { y: yAxisConfig, x: { ticks: { color: '#A0A0A0' } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Análise por Dia da Semana', color: '#F0F0F0', font: { size: 16 } } } } }); };
             const addSale = (e) => { e.preventDefault(); sales.push({ id: Date.now(), product: document.getElementById('product').value, quantity: parseInt(document.getElementById('quantity').value), price: parseFloat(document.getElementById('price').value), customer: document.getElementById('customer').value, paymentMethod: document.getElementById('payment-method').value, isPaid: false, isDelivered: false }); saveData(); refreshUI(true); saleForm.reset(); };
-            
-            const handleTableClick = (e) => {
-                const target = e.target.closest('button');
-                if (!target) return;
-                const saleId = parseInt(target.closest('tr').dataset.id);
-
-                if (target.classList.contains('status-icon')) {
-                    const statusType = target.dataset.status;
-                    const sale = sales.find(s => s.id === saleId);
-                    if (sale) { sale[statusType] = !sale[statusType]; saveData(); refreshUI(); }
-                }
-
-                if (target.classList.contains('delete-btn')) {
-                    Swal.fire({
-                        title: 'Você tem certeza?', text: "Esta ação não pode ser desfeita!", icon: 'warning', iconColor: '#FFD700',
-                        showCancelButton: true, confirmButtonText: 'Sim, deletar!', cancelButtonText: 'Cancelar',
-                        background: '#1A1A2E', color: '#F0F0F0', confirmButtonColor: '#8A2BE2', cancelButtonColor: '#555B69'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            sales = sales.filter(s => s.id !== saleId); saveData(); refreshUI();
-                            Swal.fire({ title: 'Deletado!', text: 'A venda foi removida.', icon: 'success', background: '#1A1A2E', color: '#F0F0F0', confirmButtonColor: '#8A2BE2' });
-                        }
-                    });
-                }
-            };
-            
+            const handleTableClick = (e) => { const target = e.target.closest('button'); if (!target) return; const saleId = parseInt(target.closest('tr').dataset.id); if (target.classList.contains('status-icon')) { const statusType = target.dataset.status; const sale = sales.find(s => s.id === saleId); if (sale) { sale[statusType] = !sale[statusType]; saveData(); refreshUI(); } } if (target.classList.contains('delete-btn')) { Swal.fire({ title: 'Você tem certeza?', text: "Esta ação não pode ser desfeita!", icon: 'warning', iconColor: '#FFD700', showCancelButton: true, confirmButtonText: 'Sim, deletar!', cancelButtonText: 'Cancelar', background: '#1A1A2E', color: '#F0F0F0', confirmButtonColor: '#8A2BE2', cancelButtonColor: '#555B69' }).then((result) => { if (result.isConfirmed) { sales = sales.filter(s => s.id !== saleId); saveData(); refreshUI(); Swal.fire({ title: 'Deletado!', text: 'A venda foi removida.', icon: 'success', background: '#1A1A2E', color: '#F0F0F0', confirmButtonColor: '#8A2BE2' }); } }); } };
             const handleFilterClick = (e) => { currentFilter = e.target.dataset.filter; filterButtons.forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); renderSales(); };
+            const handleChartToggle = (e) => { dailyChartMetric = e.target.dataset.metric; chartToggleButtons.forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); updateDailySalesChart(); };
             const exportToCSV = () => { if(sales.length === 0){ Swal.fire({title:'Oops!', text:'Não há vendas para exportar.', icon:'info', background:'#1A1A2E', color:'#F0F0F0'}); return; } const h=['id','product','quantity','price','customer','paymentMethod','isPaid','isDelivered']; let c=h.join(',')+'\n'; sales.forEach(s=>{c+=h.map(H=>`"${s[H]}"`).join(',')+'\n'}); const b=new Blob([c],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`levelup3d_vendas_backup_${new Date().toISOString().split('T')[0]}.csv`; a.click(); };
-            const importFromCSV = (e) => { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=(ev)=>{ const c=ev.target.result; const l=c.split('\n').filter(L=>L.trim()); if(l.length<=1){ Swal.fire('Erro', 'Arquivo CSV vazio ou em formato inválido.', 'error'); return; } Swal.fire({ title: 'Importar Vendas?', text: "Isso irá sobrescrever TODAS as vendas atuais. Esta ação é irreversível.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim, importar!', cancelButtonText: 'Cancelar', background: '#1A1A2E', color: '#F0F0F0', confirmButtonColor: '#8A2BE2', cancelButtonColor: '#555B69' }).then(res=>{ if(res.isConfirmed){ try { const h=l[0].split(',').map(H=>H.replace(/"/g,'').trim()); const iS=[]; for(let i=1;i<l.length;i++){const v=l[i].split(',').map(V=>V.replace(/"/g,'').trim());const s={}; h.forEach((H,I)=>{let V=v[I]; if(['id','quantity'].includes(H))V=parseInt(V);if(H==='price')V=parseFloat(V);if(['isPaid','isDelivered'].includes(H))V=V==='true';s[H]=V;}); iS.push(s);} sales=iS; saveData(); refreshUI(); Swal.fire({title:'Sucesso!', text:`${iS.length} vendas foram importadas.`, icon:'success', background:'#1A1A2E', color:'#F0F0F0'}); } catch (error){ Swal.fire('Erro na Importação', 'Ocorreu um problema ao processar o arquivo.', 'error'); } } importInput.value=''; }); }; r.readAsText(f); };
+            const importFromCSV = (e) => { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=(ev)=>{ const c=ev.target.result; const l=c.split('\n').filter(L=>L.trim()); if(l.length<=1){ Swal.fire('Erro', 'Arquivo CSV vazio ou em formato inválido.', 'error'); return; } Swal.fire({ title: 'Importar Vendas?', text: "Isso irá sobrescrever TODAS as vendas atuais.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim, importar!', cancelButtonText: 'Cancelar', background: '#1A1A2E', color: '#F0F0F0', confirmButtonColor: '#8A2BE2', cancelButtonColor: '#555B69' }).then(res=>{ if(res.isConfirmed){ try { const h=l[0].split(',').map(H=>H.replace(/"/g,'').trim()); const iS=[]; for(let i=1;i<l.length;i++){const v=l[i].split(',').map(V=>V.replace(/"/g,'').trim());const s={}; h.forEach((H,I)=>{let V=v[I]; if(['id','quantity'].includes(H))V=parseInt(V);if(H==='price')V=parseFloat(V);if(['isPaid','isDelivered'].includes(H))V=V==='true';s[H]=V;}); iS.push(s);} sales=iS; saveData(); refreshUI(); Swal.fire({title:'Sucesso!', text:`${iS.length} vendas importadas.`, icon:'success', background:'#1A1A2E', color:'#F0F0F0'}); } catch (error){ Swal.fire('Erro na Importação', 'Ocorreu um problema ao processar o arquivo.', 'error'); } } importInput.value=''; }); }; r.readAsText(f); };
 
             // Event Listeners
             saleForm.addEventListener('submit', addSale);
             salesTableBody.addEventListener('click', handleTableClick);
             filterButtons.forEach(btn => btn.addEventListener('click', handleFilterClick));
             chartToggleButtons.forEach(btn => btn.addEventListener('click', handleChartToggle));
+            searchInput.addEventListener('input', (e) => { searchTerm = e.target.value; renderSales(); });
             exportBtn.addEventListener('click', exportToCSV);
             importInput.addEventListener('change', importFromCSV);
             
-            // Renderização Inicial
             refreshUI();
         });
     </script>
