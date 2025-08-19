@@ -14,6 +14,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
         :root {
@@ -39,6 +40,7 @@
             margin: 0;
             background-color: var(--bg-dark);
             color: var(--text-light);
+            padding-bottom: 70px; /* Adiciona espaço para o rodapé fixo */
         }
 
         /* --- Layout Principal CORRIGIDO --- */
@@ -229,7 +231,19 @@
             .mobile-logo h1 { font-size: 1.5rem; }
             
             #sale-form { grid-template-columns: 1fr; }
-            .charts-grid { grid-template-columns: 1fr; }
+            .charts-grid { 
+                display: flex; /* Mudei para flexbox para controle mais fácil */
+                flex-direction: column;
+                gap: 2rem;
+            }
+            .chart-container, .bar-chart-container {
+                width: 100%;
+                height: 300px; /* Altura fixa para evitar rolagem infinita */
+                margin: 0;
+            }
+            .bar-chart-container {
+                height: 350px; /* Um pouco maior para o gráfico de barras */
+            }
 
             .sales-table-wrapper thead { display: none; }
             .sales-table-wrapper tr {
@@ -487,7 +501,11 @@
                 }); 
                 if (salesBarChart) salesBarChart.destroy(); 
                 const chartLabel = dailyChartMetric === 'count' ? 'Nº de Vendas' : 'Faturamento (R$)'; 
-                const yAxisConfig = dailyChartMetric === 'count' ? { beginAtZero: true, ticks: { color: '#A0A0A0', stepSize: 1 } } : { beginAtZero: true, ticks: { color: '#A0A0A0', callback: (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value) } }; 
+                const yAxisConfig = { 
+                    beginAtZero: true, 
+                    ticks: { color: '#A0A0A0' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                };
                 
                 salesBarChart = new Chart(barChartCanvas, { 
                     type: 'bar', 
@@ -504,13 +522,30 @@
                     }, 
                     options: { 
                         responsive: true, 
+                        maintainAspectRatio: false,
                         scales: { 
                             y: yAxisConfig, 
-                            x: { ticks: { color: '#A0A0A0' } } 
+                            x: { ticks: { color: '#A0A0A0' }, grid: { display: false } } 
                         }, 
                         plugins: { 
                             legend: { display: false }, 
-                            title: { display: true, text: 'Análise por Dia da Semana', color: '#F0F0F0', font: { size: 16 } } 
+                            title: { display: true, text: 'Análise por Dia da Semana', color: '#F0F0F0', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (dailyChartMetric === 'revenue') {
+                                            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.raw);
+                                        } else {
+                                            label += context.raw;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
                         } 
                     } 
                 }); 
@@ -664,32 +699,38 @@
                         confirmButtonColor: '#8A2BE2', 
                         cancelButtonColor: '#555B69' 
                     }).then(res=>{ 
-                        if(res.isConfirmed){ 
-                            try { 
-                                const h=l[0].split(',').map(H=>H.replace(/"/g,'').trim()); 
-                                const iS=[]; 
-                                for(let i=1;i<l.length;i++){
-                                    const v=l[i].split(',').map(V=>V.replace(/"/g,'').trim());
-                                    const s={}; 
-                                    h.forEach((H,I)=>{
-                                        let V=v[I]; 
-                                        if(['id','quantity'].includes(H))V=parseInt(V);
-                                        if(H==='price')V=parseFloat(V);
-                                        if(['isPaid','isDelivered'].includes(H))V=V==='true';
-                                        s[H]=V;
-                                    }); 
+                        if (res.isConfirmed){
+                            try {
+                                const h = l[0].split(',').map(H => H.replace(/"/g, '').trim());
+                                const iS = [];
+                                for (let i = 1; i < l.length; i++){
+                                    const v = l[i].split(',').map(V => V.replace(/"/g, '').trim());
+                                    const s = {};
+                                    h.forEach((H, I) => {
+                                        let V = v[I];
+                                        if (['id', 'quantity'].includes(H)) V = parseInt(V);
+                                        if (H === 'price') V = parseFloat(V);
+                                        if (['isPaid', 'isDelivered'].includes(H)) V = V === 'true';
+                                        s[H] = V;
+                                    });
                                     iS.push(s);
-                                } 
-                                sales=iS; 
-                                saveData(); 
-                                refreshUI(); 
-                                Swal.fire({title:'Sucesso!', text:`${iS.length} vendas importadas.`, icon:'success', background:'#1A1A2E', color:'#F0F0F0'}); 
-                            } catch (error){ 
-                                Swal.fire('Erro na Importação', 'Ocorreu um problema ao processar o arquivo.', 'error'); 
-                            } 
-                        } 
-                        importInput.value=''; 
-                    }); 
+                                }
+                                sales = iS;
+                                saveData();
+                                refreshUI();
+                                Swal.fire({
+                                    title: 'Sucesso!',
+                                    text: `${iS.length} vendas importadas.`,
+                                    icon: 'success',
+                                    background: '#1A1A2E',
+                                    color: '#F0F0F0'
+                                });
+                            } catch (error){
+                                Swal.fire('Erro na Importação', 'Ocorreu um problema ao processar o arquivo.', 'error');
+                            }
+                        }
+                        importInput.value = '';
+                    });
                 }; 
                 r.readAsText(f); 
             };
