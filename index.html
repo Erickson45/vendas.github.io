@@ -14,7 +14,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
         :root {
@@ -40,7 +39,6 @@
             margin: 0;
             background-color: var(--bg-dark);
             color: var(--text-light);
-            padding-bottom: 70px; /* Adiciona espaço para o rodapé fixo */
         }
 
         /* --- Layout Principal CORRIGIDO --- */
@@ -406,11 +404,15 @@
             const saveProducts = () => localStorage.setItem('products', JSON.stringify(products));
 
             const loadProductsIntoSelect = () => {
-                products = JSON.parse(localStorage.getItem('products')) || []; // Refresh products
+                products = JSON.parse(localStorage.getItem('products')) || [];
                 productSelect.innerHTML = '';
-                if (products.length === 0) {
+
+                // Filtra os produtos com estoque > 0
+                const availableProducts = products.filter(p => p.quantity > 0);
+
+                if (availableProducts.length === 0) {
                     const defaultOption = document.createElement('option');
-                    defaultOption.textContent = 'Nenhum produto cadastrado';
+                    defaultOption.textContent = 'Nenhum produto em estoque';
                     defaultOption.value = '';
                     defaultOption.disabled = true;
                     defaultOption.selected = true;
@@ -418,7 +420,7 @@
                     productSelect.disabled = true;
                 } else {
                     productSelect.disabled = false;
-                    products.forEach(product => {
+                    availableProducts.forEach(product => {
                         const option = document.createElement('option');
                         option.textContent = product.name;
                         option.value = product.name;
