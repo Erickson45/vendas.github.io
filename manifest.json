@@ -1,6 +1,6 @@
 {
   "name": "LevelUp3D Vendas",
-  "short_name": "Vendas",
+  "short_name": "LevelUp3D",
   "description": "Painel de Controle de Vendas da LevelUp3D",
   "start_url": "./index.html",
   "display": "standalone",
